@@ -170,29 +170,25 @@ class ClickService : AccessibilityService() {
         b.getLocationOnScreen(loc)
         val cx = loc[0] + b.width / 2f
         val cy = loc[1] + b.height / 2f
-        val n = prefs.getInt("count", 2)
+        val n = prefs.getInt("count", 2).coerceIn(1, 10)
         val gap = prefs.getInt("gap", 30).toLong()
-        // Кнопка на время кликов становится "прозрачной для касаний",
-        // чтобы клики дошли до приложения под ней
         lp.flags = lp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         try { wm.updateViewLayout(b, lp) } catch (_: Exception) {}
-        h.postDelayed({ tap(cx, cy, n, gap) }, 40)
-    }
-
-    private fun tap(cx: Float, cy: Float, left: Int, gap: Long) {
-        if (left <= 0) { finishFire(); return }
-        val path = Path().apply { moveTo(cx, cy) }
-        val g = GestureDescription.Builder()
-            .addStroke(GestureDescription.StrokeDescription(path, 0, 20))
-            .build()
-        val ok = dispatchGesture(g, object : GestureResultCallback() {
-            override fun onCompleted(d: GestureDescription?) {
-                if (left - 1 <= 0) finishFire()
-                else h.postDelayed({ tap(cx, cy, left - 1, gap) }, gap)
+        h.postDelayed({
+            val tapMs = 8L
+            val builder = GestureDescription.Builder()
+            for (i in 0 until n) {
+                val path = Path().apply { moveTo(cx, cy) }
+                builder.addStroke(
+                    GestureDescription.StrokeDescription(path, i * (tapMs + gap), tapMs)
+                )
             }
-            override fun onCancelled(d: GestureDescription?) { finishFire() }
-        }, null)
-        if (!ok) finishFire()
+            val ok = dispatchGesture(builder.build(), object : GestureResultCallback() {
+                override fun onCompleted(d: GestureDescription?) { finishFire() }
+                override fun onCancelled(d: GestureDescription?) { finishFire() }
+            }, null)
+            if (!ok) finishFire()
+        }, 20)
     }
 
     private fun finishFire() {
