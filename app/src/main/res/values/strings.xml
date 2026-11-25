@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Click Doubler</string>
+    <string name="service_desc">Показывает плавающую кнопку поверх приложений и по нажатию делает несколько кликов в этом месте экрана.</string>
+</resources>
